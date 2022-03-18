@@ -23,7 +23,7 @@ Here are the technologies used in this project.
  
 ## How to use
  
-### 1 - Para Subir a aplicação é necessário a crião de um data-base com o nome "veículo", senha "root" e usuário "root". Ou editar no arquivo properties conforme suas configurações.
+### 1 - Para Subir a aplicação é necessário a criação de um data-base com o nome "veículo", senha "root" e usuário "root". Ou editar no arquivo properties conforme suas configurações.
 
 ### 2 - A API já está configurada com o Flyway para versionamento do Banco de Dados.
 
