@@ -35,7 +35,7 @@ Here are the technologies used in this project.
  
   - CRUD de veículos.
   - Sincronização das Informações com o Banco de Dados.
-  - Exite um outro Repository com um aplicação em Angular(Angular-Front) para consumir esta API.
+  - Existe um outro Repository com um aplicação em Angular(Angular-Front) para consumir esta API.
  
  
 ## Links
