@@ -53,6 +53,11 @@ public class VeiculoController {
 		return veiculoRepository.findByMarcaAndAno(marca, ano);
 	}
 	
+	@GetMapping(value = "/porMarcaOuAno" )
+	public List<Veiculo> buscarPorMarcaOrAno(MarcaFabricante marca, Integer ano) {
+		return veiculoRepository.findByMarcaOrAno(marca, ano);
+	}
+	
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public Veiculo adicionar(@RequestBody Veiculo veiculo) {

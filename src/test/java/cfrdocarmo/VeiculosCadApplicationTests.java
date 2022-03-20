@@ -3,7 +3,6 @@ package cfrdocarmo;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 
 import org.junit.jupiter.api.Assertions;
@@ -33,11 +32,13 @@ import io.restassured.http.ContentType;
 @TestPropertySource("/application-test.properties")
 class VeiculosCadApplicationTests {
 	
-	private static final int VEICULO_ID_INEXISTENTE = 100;
+	private static final Long VEICULO_ID_INEXISTENTE = 100L;
 
 	private Veiculo jetta;
+	private Veiculo novoVeiculo2;
 	private int quantidadeVeiculosCadastrados;
 	private String jsonCorretoVeiculo;
+	private String jsonVeiculoParcial;
 	
 	@LocalServerPort
 	private int port;
@@ -60,6 +61,9 @@ class VeiculosCadApplicationTests {
 		jsonCorretoVeiculo = ResourceUtils.getContentFromResource(
 				"/json/correto/veiculo.json");
 		
+		jsonVeiculoParcial = ResourceUtils.getContentFromResource(
+				"/json/correto/veiculo.json");
+		
 		databaseCleaner.clearTables();
 		prepararDados();
 	}
@@ -71,7 +75,7 @@ class VeiculosCadApplicationTests {
 		jetta.setDescricao("Execução de Testes ");
 		jetta.setMarca(MarcaFabricante.VOLKSWAGEN);
 		
-		Veiculo novoVeiculo2 = new Veiculo();
+		novoVeiculo2 = new Veiculo();
 		novoVeiculo2.setVeiculo("Uno");
 		novoVeiculo2.setAno(2021);
 		novoVeiculo2.setDescricao("Massa de Dados");
@@ -112,14 +116,13 @@ class VeiculosCadApplicationTests {
 	public void deveFalhar_QuandoExcluirVeiculoInexistente() {
 		EntidadeNaoEncontradaException erroEsperado =
 				Assertions.assertThrows(EntidadeNaoEncontradaException.class, () -> {
-					cadastroVeiculo.excluir(10L);
+					cadastroVeiculo.excluir(VEICULO_ID_INEXISTENTE);
 				});
 		assertThat(erroEsperado).isNotNull();
 	}
 	
 	@Test
 	public void deveRetornarStatus200_QuandoConsultarVeiculos() {
-		
 		given()
 			.accept(ContentType.JSON)
 		.when()
@@ -142,7 +145,7 @@ class VeiculosCadApplicationTests {
 	@Test
 	public void deveRetornarRespostaEStatus404_QuandoConsultarVeiculoInexistente() {
 		given()
-			.pathParam("veiculoId", 100)
+			.pathParam("veiculoId", VEICULO_ID_INEXISTENTE)
 			.accept(ContentType.JSON)
 		.when()
 			.get("/{veiculoId}")
@@ -151,8 +154,29 @@ class VeiculosCadApplicationTests {
 	}
 	
 	@Test
+	public void deveRetornarRespostaEStatus404_QuandoDeletarVeiculoInexistente() {
+		given()
+			.pathParam("veiculoId", VEICULO_ID_INEXISTENTE)
+			.accept(ContentType.JSON)
+		.when()
+			.delete("/{veiculoId}")
+		.then()
+			.statusCode(HttpStatus.NOT_FOUND.value());
+	}
+	
+	@Test
+	public void deveRetornarRespostaEStatus204_QuandoConsultarVeiculoInexistente() {
+		given()
+			.pathParam("veiculoId", 1L)
+			.accept(ContentType.JSON)
+		.when()
+			.delete("/{veiculoId}")
+		.then()
+			.statusCode(HttpStatus.NO_CONTENT.value());
+	}
+	
+	@Test
 	public void deveRetornarQuantidadeCorretaDeVeiculos_QuandoConsultarVeiculos() {
-		
 		given()
 			.accept(ContentType.JSON)
 		.when()
@@ -162,8 +186,73 @@ class VeiculosCadApplicationTests {
 	}
 	
 	@Test
+	public void deveRetornarStatusCode200_QuandoConsultarVeiculosComMarca() {
+		given().log().all()
+			.params("marca", jetta.getMarca())
+			.accept(ContentType.JSON)
+		.when()
+			.get("/porMarcaOuAno")
+		.then()
+			.statusCode(HttpStatus.OK.value());
+	}
+	
+	@Test
+	public void deveRetornarStatusCode400_QuandoConsultarVeiculosComMarca() {
+		given().log().all()
+			.params("marca", "FORD")
+			.accept(ContentType.JSON)
+		.when()
+			.get("/porMarcaOuAno")
+		.then()
+			.statusCode(HttpStatus.BAD_REQUEST.value());
+	}
+	
+	@Test
+	public void deveRetornarStatusCode200_QuandoConsultarVeiculosComAno() {
+		given().log().all()
+			.params("ano", 2019)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/porMarcaOuAno")
+		.then()
+			.statusCode(HttpStatus.OK.value());
+	}
+	
+	@Test
+	public void deveRetornarUmaListaVazia_QuandoConsultarVeiculosComAnoIneXistente() {
+		given().log().all()
+			.params("ano", 20)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/porMarcaOuAno")
+		.then()
+			.body("", hasSize(0));
+	}
+	
+	@Test
+	public void deveRetornarStatusCode200_QuandoConsultarVeiculosComMarcaOuAno() {
+		given().log().all()
+			.params("marca", jetta.getMarca())
+			.params("ano", 2030)
+			.accept(ContentType.JSON)
+		.when()
+			.get("/porMarcaOuAno")
+		.then()
+			.statusCode(HttpStatus.OK.value());
+	}
+	
+	@Test
+	public void deveRetornarUmaListaVazia_QuandoConsultarVeiculosComMarcaOuAnoSemPassarNenhumParametro() {
+		given().log().all()
+			.accept(ContentType.JSON)
+		.when()
+			.get("/porMarcaOuAno")
+		.then()
+		.body("", hasSize(0));
+	}
+	
+	@Test
 	public void deveRetornarStatus201_QuandoCadastrarVeiculo() {
-		
 		given()
 	        .body(jsonCorretoVeiculo)
 	        .contentType(ContentType.JSON)
@@ -172,6 +261,32 @@ class VeiculosCadApplicationTests {
 	        .post()
 	    .then()
 	        .statusCode(HttpStatus.CREATED.value());
+	}
+	
+	@Test
+	public void deveRetornarStatus200_QuandoAtualizarParcialmenteUmVeiculo() {
+		given()
+			.body(jsonVeiculoParcial)
+			.pathParam("veiculoId", 1L)
+			.contentType(ContentType.JSON)
+			.accept(ContentType.JSON)
+		.when()
+			.patch("/{veiculoId}")
+		.then()
+			.statusCode(HttpStatus.OK.value());
+	}
+	
+	@Test
+	public void deveRetornarRespostaEStatus404_QuandoAtualizarVeiculoInexistente() {
+		given()
+	        .body(jsonVeiculoParcial)
+	        .pathParam("veiculoId", VEICULO_ID_INEXISTENTE)
+	        .contentType(ContentType.JSON)
+	        .accept(ContentType.JSON)
+	    .when()
+	        .patch("/{veiculoId}")
+	    .then()
+	        .statusCode(HttpStatus.NOT_FOUND.value());
 	}
 
 }

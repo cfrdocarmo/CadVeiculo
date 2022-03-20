@@ -12,4 +12,6 @@ import cfrdocarmo.veiculo.domain.model.Veiculo;
 public interface VeiculoRepository extends JpaRepository<Veiculo, Long> {
 	
 	List<Veiculo> findByMarcaAndAno(MarcaFabricante marca, Integer ano);
+	
+	List<Veiculo> findByMarcaOrAno(MarcaFabricante marca, Integer ano);
 }

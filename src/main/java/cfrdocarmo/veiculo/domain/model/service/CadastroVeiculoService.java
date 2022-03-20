@@ -1,12 +1,10 @@
 package cfrdocarmo.veiculo.domain.model.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import cfrdocarmo.veiculo.domain.model.Veiculo;
-import cfrdocarmo.veiculo.domain.model.exception.EntidadeEmUsoExceotion;
 import cfrdocarmo.veiculo.domain.model.exception.EntidadeNaoEncontradaException;
 import cfrdocarmo.veiculo.domain.model.repository.VeiculoRepository;
 
@@ -27,8 +25,6 @@ public class CadastroVeiculoService {
 			veiculoRepository.deleteById(veiculoId);
 		} catch(EmptyResultDataAccessException ex) {
 			throw new EntidadeNaoEncontradaException(String.format(MSG_VEICULO_NAO_ENCOTRADO, veiculoId));
-		} catch(DataIntegrityViolationException e) {
-			throw new EntidadeEmUsoExceotion(String.format("Cozinha de código %d não pode ser removida pois está em uso	", veiculoId));
 		}
 	}
 	
