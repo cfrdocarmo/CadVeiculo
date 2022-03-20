@@ -2,7 +2,6 @@ package cfrdocarmo;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 import org.junit.jupiter.api.Assertions;
@@ -25,6 +24,8 @@ import cfrdocarmo.veiculo.domain.model.exception.EntidadeNaoEncontradaException;
 import cfrdocarmo.veiculo.domain.model.repository.VeiculoRepository;
 import cfrdocarmo.veiculo.domain.model.service.CadastroVeiculoService;
 import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.http.ContentType;
 
 @ExtendWith(SpringExtension.class)
@@ -32,6 +33,10 @@ import io.restassured.http.ContentType;
 @TestPropertySource("/application-test.properties")
 class VeiculosCadApplicationTests {
 	
+	private static final String VEICULO_ID = "/{veiculoId}";
+
+	private static final String POR_MARCA_OU_ANO = "/porMarcaOuAno";
+
 	private static final Long VEICULO_ID_INEXISTENTE = 100L;
 
 	private Veiculo jetta;
@@ -57,6 +62,14 @@ class VeiculosCadApplicationTests {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 		RestAssured.port = port;
 		RestAssured.basePath = "/veiculos";
+		
+		RestAssured.requestSpecification = new RequestSpecBuilder().
+                setContentType(ContentType.JSON).
+                build();
+		
+//		RestAssured.responseSpecification = new ResponseSpecBuilder().
+//                expectContentType(ContentType.JSON).
+//                build();
 		
 		jsonCorretoVeiculo = ResourceUtils.getContentFromResource(
 				"/json/correto/veiculo.json");
@@ -124,7 +137,6 @@ class VeiculosCadApplicationTests {
 	@Test
 	public void deveRetornarStatus200_QuandoConsultarVeiculos() {
 		given()
-			.accept(ContentType.JSON)
 		.when()
 			.get()
 		.then()
@@ -135,9 +147,8 @@ class VeiculosCadApplicationTests {
 	public void deveRetornarRespostaEStatusCorreto_QuandoConsultarVeiculoExistente() {
 		given()
 			.pathParam("veiculoId", jetta.getId())
-			.accept(ContentType.JSON)
 		.when()
-			.get("/{veiculoId}")
+			.get(VEICULO_ID)
 		.then()
 			.statusCode(HttpStatus.OK.value());
 	}
@@ -146,9 +157,8 @@ class VeiculosCadApplicationTests {
 	public void deveRetornarRespostaEStatus404_QuandoConsultarVeiculoInexistente() {
 		given()
 			.pathParam("veiculoId", VEICULO_ID_INEXISTENTE)
-			.accept(ContentType.JSON)
 		.when()
-			.get("/{veiculoId}")
+			.get(VEICULO_ID)
 		.then()
 			.statusCode(HttpStatus.NOT_FOUND.value());
 	}
@@ -157,9 +167,8 @@ class VeiculosCadApplicationTests {
 	public void deveRetornarRespostaEStatus404_QuandoDeletarVeiculoInexistente() {
 		given()
 			.pathParam("veiculoId", VEICULO_ID_INEXISTENTE)
-			.accept(ContentType.JSON)
 		.when()
-			.delete("/{veiculoId}")
+			.delete(VEICULO_ID)
 		.then()
 			.statusCode(HttpStatus.NOT_FOUND.value());
 	}
@@ -168,9 +177,8 @@ class VeiculosCadApplicationTests {
 	public void deveRetornarRespostaEStatus204_QuandoConsultarVeiculoInexistente() {
 		given()
 			.pathParam("veiculoId", 1L)
-			.accept(ContentType.JSON)
 		.when()
-			.delete("/{veiculoId}")
+			.delete(VEICULO_ID)
 		.then()
 			.statusCode(HttpStatus.NO_CONTENT.value());
 	}
@@ -178,7 +186,6 @@ class VeiculosCadApplicationTests {
 	@Test
 	public void deveRetornarQuantidadeCorretaDeVeiculos_QuandoConsultarVeiculos() {
 		given()
-			.accept(ContentType.JSON)
 		.when()
 			.get()
 		.then()
@@ -187,66 +194,60 @@ class VeiculosCadApplicationTests {
 	
 	@Test
 	public void deveRetornarStatusCode200_QuandoConsultarVeiculosComMarca() {
-		given().log().all()
+		given()
 			.params("marca", jetta.getMarca())
-			.accept(ContentType.JSON)
 		.when()
-			.get("/porMarcaOuAno")
+			.get(POR_MARCA_OU_ANO)
 		.then()
 			.statusCode(HttpStatus.OK.value());
 	}
 	
 	@Test
 	public void deveRetornarStatusCode400_QuandoConsultarVeiculosComMarca() {
-		given().log().all()
+		given()
 			.params("marca", "FORD")
-			.accept(ContentType.JSON)
 		.when()
-			.get("/porMarcaOuAno")
+			.get(POR_MARCA_OU_ANO)
 		.then()
 			.statusCode(HttpStatus.BAD_REQUEST.value());
 	}
 	
 	@Test
 	public void deveRetornarStatusCode200_QuandoConsultarVeiculosComAno() {
-		given().log().all()
+		given()
 			.params("ano", 2019)
-			.accept(ContentType.JSON)
 		.when()
-			.get("/porMarcaOuAno")
+			.get(POR_MARCA_OU_ANO)
 		.then()
 			.statusCode(HttpStatus.OK.value());
 	}
 	
 	@Test
 	public void deveRetornarUmaListaVazia_QuandoConsultarVeiculosComAnoIneXistente() {
-		given().log().all()
+		given()
 			.params("ano", 20)
-			.accept(ContentType.JSON)
 		.when()
-			.get("/porMarcaOuAno")
+			.get(POR_MARCA_OU_ANO)
 		.then()
 			.body("", hasSize(0));
 	}
 	
 	@Test
 	public void deveRetornarStatusCode200_QuandoConsultarVeiculosComMarcaOuAno() {
-		given().log().all()
+		given()
 			.params("marca", jetta.getMarca())
 			.params("ano", 2030)
-			.accept(ContentType.JSON)
 		.when()
-			.get("/porMarcaOuAno")
+			.get(POR_MARCA_OU_ANO)
 		.then()
 			.statusCode(HttpStatus.OK.value());
 	}
 	
 	@Test
 	public void deveRetornarUmaListaVazia_QuandoConsultarVeiculosComMarcaOuAnoSemPassarNenhumParametro() {
-		given().log().all()
-			.accept(ContentType.JSON)
+		given()
 		.when()
-			.get("/porMarcaOuAno")
+			.get(POR_MARCA_OU_ANO)
 		.then()
 		.body("", hasSize(0));
 	}
@@ -255,8 +256,6 @@ class VeiculosCadApplicationTests {
 	public void deveRetornarStatus201_QuandoCadastrarVeiculo() {
 		given()
 	        .body(jsonCorretoVeiculo)
-	        .contentType(ContentType.JSON)
-	        .accept(ContentType.JSON)
 	    .when()
 	        .post()
 	    .then()
@@ -268,10 +267,8 @@ class VeiculosCadApplicationTests {
 		given()
 			.body(jsonVeiculoParcial)
 			.pathParam("veiculoId", 1L)
-			.contentType(ContentType.JSON)
-			.accept(ContentType.JSON)
 		.when()
-			.patch("/{veiculoId}")
+			.patch(VEICULO_ID)
 		.then()
 			.statusCode(HttpStatus.OK.value());
 	}
@@ -281,12 +278,10 @@ class VeiculosCadApplicationTests {
 		given()
 	        .body(jsonVeiculoParcial)
 	        .pathParam("veiculoId", VEICULO_ID_INEXISTENTE)
-	        .contentType(ContentType.JSON)
-	        .accept(ContentType.JSON)
 	    .when()
-	        .patch("/{veiculoId}")
+	        .patch(VEICULO_ID)
 	    .then()
 	        .statusCode(HttpStatus.NOT_FOUND.value());
 	}
-
+	
 }
